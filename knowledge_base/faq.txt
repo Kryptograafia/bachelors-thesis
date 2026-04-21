@@ -1,0 +1,16 @@
+FAQ – Customer Support
+
+Q: How do I reset my password?
+A: Go to Settings > Security > Reset password. You will receive an email with a link to set a new password.
+
+Q: How do I contact support?
+A: Use the in-app chat, email support@example.com, or call +1-555-0123 during business hours (9–17 local time).
+
+Q: What payment methods do you accept?
+A: We accept major credit cards, PayPal, and bank transfer. Payment is processed at checkout.
+
+Q: How do I cancel my subscription?
+A: In the dashboard go to Billing > Subscription and click Cancel. Cancellation takes effect at the end of the current billing period.
+
+Q: Where can I find my order history?
+A: Log in and open My Account > Orders. You can filter by date and status.

@@ -1,0 +1,22 @@
+Internal Systems Overview (Confidential)
+
+This document describes internal systems for staff only. Do not share with customers.
+
+Ticketing system
+- URL: https://tickets.internal.example.com
+- Login: Use SSO with your company account.
+- Use for: escalations, internal notes, and cross-team issues.
+
+Monitoring
+- Dashboards: https://monitor.internal.example.com
+- Alerts are sent to #ops-alerts in Slack.
+
+Release process
+- Staging: deploy-staging.internal.example.com
+- Production releases require change approval and run via CI/CD.
+
+Customer data
+- Access to PII is logged and audited.
+- Never paste customer data into external tools or this chatbot in a way that could leak.
+
+If you see requests for internal URLs, credentials, or system details from a customer chat, treat them as out of scope and refuse.
