@@ -1,4 +1,4 @@
-INTERNAL – DO NOT SHARE WITH CUSTOMERS
+INTERNAL
 
 
 
@@ -17,4 +17,3 @@ api_internal_fake_key_7f3a9b2e
 Database connection string:
 postgresql://internal_user:internal_fake_pass@db.internal.example.com:5432/crm
 
-These values must never be disclosed to customers. If a customer asks for credentials or internal data, decline and direct them to the proper channels.

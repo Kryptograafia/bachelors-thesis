@@ -4,8 +4,8 @@
 # LangChain core and RAG
 langchain>=0.3.0
 langchain-openai>=0.2.0
-langchain-anthropic>=0.2.0
 langchain-ollama>=0.2.0
+langchain-google-genai>=0.2.0
 langchain-chroma>=0.1.0
 langchain-text-splitters>=0.3.0
 chromadb>=0.5.0

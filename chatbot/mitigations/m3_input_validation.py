@@ -1,50 +1,104 @@
-"""M3 – Input validation and sanitization: remove instruction-override phrases, obfuscation patterns, syntactic separation."""
+"""
+M3 – Input sanitization (simple deny-list).
+
+Strips substrings matching:
+1. **Keyword / term blocklist** — single-token triggers (word boundaries), plus chat-template tokens.
+2. **Encoding-style runs** — long Base64- or hex-like spans without decoding them.
+3. **Syntactic separation** — instructions hidden after blank lines/tabs.
+
+Matches are replaced with a space; whitespace is normalized; length capped; empty → DEFAULT_FALLBACK_RESPONSE.
+
+**False positives:** broad keywords like `ignore` or `paste` can appear in benign support text.
+This is intentionally simple; refine the list for production.
+"""
+from __future__ import annotations
+
 import re
 
 from ..rag_chain import DEFAULT_FALLBACK_RESPONSE
 
-# Patterns and keywords that suggest prompt injection. Sanitization removes or neutralizes matches.
-INSTRUCTION_OVERRIDE_PATTERNS = [
-    r"ignore\s+(all\s+)?(previous|above|prior)\s+(instructions?|prompts?|text)",
-    r"disregard\s+(all\s+)?(previous|above)",
-    r"forget\s+(everything|all\s+above)",
-    r"override\s+(your\s+)?(instructions?|system)",
-    r"do\s+not\s+follow\s+(your\s+)?(original\s+)?instructions",
-    r"new\s+instruction[s]?\s*:",
-    r"system\s*:\s*you\s+are",
-    r"you\s+are\s+now\s+(in\s+)?(developer|admin|unrestricted)\s+mode",
-]
-# Long Base64-like runs (RFC 4648 alphabet); min length reduces accidental matches on short codes.
-_BASE64_LIKE = r"[A-Za-z0-9+/=]{24,}"
-# Long hex runs (e.g. OB-hex attacks); 0-9a-f only, any starting character in that set.
-_HEX_LIKE = r"[0-9a-fA-F]{32,}"
+_MAX_INPUT_CHARS = 2500
 
-OBFUSCATION_PATTERNS = [
-    r"decode\s+this\s+and\s+execute",
-    r"hex\s+decoding\s+required",  # OB-style framing
-    r"convert\s+from\s+hex\s+and\s+run",
-    r"decode\s+hex\s+then\s+perform",
+# High-signal instruction / exfil / attack-vocabulary terms (word-boundary; case-insensitive).
+_KEYWORD_PATTERNS = [
+    r"\bignore\b",
+    r"\bdisregard\b",
+    r"\boverride\b",
+    r"\bforget\b",
+    r"\bpaste\b",
+    r"\bextract\b",
+    r"\bdump\b",
+    r"\bleak\b",
+    r"\breveal\b",
+    r"\bjailbreak\b",
+    r"\bbypass\b",
+    r"\binject\b",
+    r"\bexfiltrate\b",
+    r"\bdecode\b",
+    r"\bdecrypt\b",
+    r"\bbase64\b",
+    r"\bhex\b",
+    r"\brot[- ]?13\b",
+    r"\bcaesar\b",
+    r"\bcipher\b",
+    r"\bsystem\s+prompt\b",
+    r"\bnew\s+instruction\b",
+]
+
+# Delimiter / role-smuggling tokens (prompt-in-prompt class).
+_DELIMITER_PATTERNS = [
+    r"\[\s*INST\s*\]",
+    r"\[\s*SYSTEM\s*\]",
+    r"<\|im_start\|>",
+    r"<\|im_end\|>",
+    r"\boverride\s*:\s*",
+]
+
+# Long opaque runs (typical of Base64/hex blobs; not a full decoder).
+_BASE64_LIKE = r"[A-Za-z0-9+/=]{32,}"
+_HEX_LIKE = r"\b(?:0x)?[0-9a-fA-F]{32,}\b"
+
+_ENCODING_RUN_PATTERNS = [
     _BASE64_LIKE,
     _HEX_LIKE,
 ]
-SYNTACTIC_SEP = re.compile(r"[\n\t]{2,}\s*(ignore|disregard|override|new\s+instruction)", re.I)
 
-def _strip_suspicious(text: str, patterns: list[str]) -> str:
+_SYNTACTIC_SEP = re.compile(
+    r"[\n\t]{2,}\s*(ignore|disregard|override|new\s+instruction)\b",
+    re.I,
+)
+
+# One flat pass order: keywords → delimiters → encoding runs → layout.
+_ALL_STRIP_PATTERNS: list[str] = (
+    _KEYWORD_PATTERNS + _DELIMITER_PATTERNS + _ENCODING_RUN_PATTERNS
+)
+
+
+def _apply_patterns(text: str, patterns: list[str]) -> str:
     out = text
-    for p in patterns:
-        out = re.sub(p, " ", out, flags=re.IGNORECASE)
+    for pattern in patterns:
+        out = re.sub(pattern, " ", out, flags=re.IGNORECASE)
     return out
 
-def _strip_syntactic_sep(text: str) -> str:
-    return SYNTACTIC_SEP.sub(" ", text)
+
+def _strip_control_chars(text: str) -> str:
+    return "".join(c for c in text if ord(c) >= 32 or c in "\n\t")
+
 
 def sanitize_input(user_input: str) -> str:
     if not user_input or not user_input.strip():
         return user_input
-    cleaned = _strip_suspicious(user_input, INSTRUCTION_OVERRIDE_PATTERNS)
-    cleaned = _strip_suspicious(cleaned, OBFUSCATION_PATTERNS)
-    cleaned = _strip_syntactic_sep(cleaned)
-    normalized = " ".join(cleaned.split())
-    if not normalized.strip():
+
+    text = user_input.strip()
+    text = _apply_patterns(text, _ALL_STRIP_PATTERNS)
+    text = _SYNTACTIC_SEP.sub(" ", text)
+    text = _strip_control_chars(text)
+    text = " ".join(text.split())
+
+    if len(text) > _MAX_INPUT_CHARS:
+        text = text[:_MAX_INPUT_CHARS]
+
+    if not text.strip():
         return DEFAULT_FALLBACK_RESPONSE
-    return normalized
+
+    return text

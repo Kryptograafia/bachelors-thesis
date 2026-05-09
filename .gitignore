@@ -12,6 +12,10 @@ venv/
 
 chroma_db/
 
+# Experiment outputs (regenerate from runner / compute_thesis_tables)
+experiment/logs/
+experiment/metrics_out/
+
 docs/
 
 .vscode/

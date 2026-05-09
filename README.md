@@ -3,7 +3,7 @@
 This repository contains a controlled experiment for a bachelor's thesis on **direct prompt injection** against a **RAG customer-support chatbot** and the effectiveness of mitigations **M1–M6** across these model backends:
 
 - **OpenAI (API)**: `gpt-4o-mini`
-- **Anthropic (API)**: `claude-haiku-4-5`
+- **Google (API)**: `gemini-2.5-flash-lite` (via `--llm google`)
 - **Ollama (local)**: `llama3.1:8b`, `mistral`, `qwen3:8b`, `gemma2:9b`
 
 The repo intentionally includes:
@@ -24,7 +24,7 @@ pip install -r requirements.txt
 Create a `.env` file:
 
 - Copy `.env.example` to `.env`
-- Fill in `OPENAI_API_KEY` and/or `ANTHROPIC_API_KEY` (depending on which provider you run)
+- Fill in `OPENAI_API_KEY` (required for embeddings / M6 guardrail), and `GOOGLE_API_KEY` if you use `--llm google`
 
 ## Run the experiment
 
@@ -44,7 +44,7 @@ Full runs (defaults: all configs):
 
 ```bash
 python -m experiment.runner --llm openai --suite alt_fixed --runs 1
-python -m experiment.runner --llm anthropic --suite alt_fixed --runs 1
+python -m experiment.runner --llm google --suite alt_fixed --runs 1
 python -m experiment.runner --llm ollama --suite alt_fixed --runs 1 --model llama3.1:8b
 python -m experiment.runner --llm ollama --suite alt_fixed --runs 1 --model mistral
 python -m experiment.runner --llm ollama --suite alt_fixed --runs 1 --model qwen3:8b

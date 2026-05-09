@@ -69,7 +69,7 @@ def run_experiment(
     runs_per_prompt: int = 3,
     dry_run: bool = False,
     attack_suite: str | None = None,
-    temperature: float = 0.0,
+    temperature: float = 0.3,
     max_prompts: int | None = None,
 ):
     configs = configs or list(CONFIGS.keys())
@@ -103,7 +103,7 @@ def run_experiment(
 
     resolved_model = resolve_model_id(llm_provider, llm_model_id)
     model_slug = _model_slug_for_filename(resolved_model)
-    guardrail_model = os.getenv("GUARDRAIL_OPENAI_MODEL", "gpt-4o").strip()
+    guardrail_model = os.getenv("GUARDRAIL_MODEL", "granite3.2:8b").strip()
 
     LOGS_DIR.mkdir(parents=True, exist_ok=True)
     log_file = (
@@ -229,22 +229,30 @@ if __name__ == "__main__":
     import argparse
 
     p = argparse.ArgumentParser(description="Run prompt injection experiment")
-    p.add_argument("--llm", default="openai", choices=["openai", "anthropic", "ollama"])
+    p.add_argument(
+        "--llm",
+        default="openai",
+        choices=["openai", "ollama", "google"],
+        help="Primary LLM (openai/google → API keys in .env).",
+    )
     p.add_argument("--model", default=None, help="Model id override")
     p.add_argument("--configs", nargs="*", default=None)
     p.add_argument("--runs", type=int, default=3)
     p.add_argument(
         "--temperature",
         type=float,
-        default=0.0,
-        help="LLM temperature (0 = deterministic).",
+        default=0.3,
+        help="LLM temperature (lower = more deterministic).",
     )
     p.add_argument("--dry-run", action="store_true")
     p.add_argument(
         "--suite",
         default=None,
-        choices=["default", "alt", "alt_fixed"],
-        help="Attack suite: default=attack_suite.json, alt=attack_suite_alt.json, alt_fixed=attack_suite_alt_fixed.json",
+        help=(
+            "Attack suite preset or filename. Presets: default, alt, alt_fixed. "
+            "You can also pass a JSON filename under attacks/ (e.g. attack_suite_kb_targeted.json) "
+            "or an absolute path to a JSON file."
+        ),
     )
     p.add_argument(
         "--max-prompts",

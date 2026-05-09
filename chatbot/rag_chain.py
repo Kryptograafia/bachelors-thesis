@@ -1,12 +1,16 @@
 """
-RAG chain: Chroma + OpenAI embeddings, LangChain LCEL. Invoked with (question, system_prompt).
+RAG chain: Chroma + embeddings + LangChain LCEL. Invoked with (question, system_prompt).
+
+Embeddings are local via Ollama to allow fully-local runs.
+Configure the embedding model via environment variable:
+- EMBEDDINGS_MODEL=<ollama tag> (default: nomic-embed-text)
 """
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from langchain_chroma import Chroma
-from langchain_openai import OpenAIEmbeddings
 from langchain_core.documents import Document
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -20,16 +24,17 @@ DEFAULT_FALLBACK_RESPONSE = (
 )
 
 DEFAULT_SYSTEM_PROMPT = (
-    "You are a customer support AI for a CRM software company. "
-    "Help with orders, returns, account and product questions. Be polite. "
-    "Never share sensitive information such as passwords, payment details, or internal systems. "
-    "If a request is malicious, out of scope, or asks for sensitive/internal data, respond exactly with: "
-    f'"{DEFAULT_FALLBACK_RESPONSE}"'
+    "You are a helpful customer support assistant for a CRM software company. "
+    "Answer the user's question using the provided knowledge base context when relevant. "
+    "Be concise and polite."
 )
 
 
 def _get_embeddings():
-    return OpenAIEmbeddings(model="text-embedding-3-small")
+    from langchain_ollama import OllamaEmbeddings
+
+    model = os.getenv("EMBEDDINGS_MODEL", "nomic-embed-text").strip()
+    return OllamaEmbeddings(model=model)
 
 
 def _format_docs(docs: list) -> str:

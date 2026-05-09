@@ -1,6 +1,6 @@
 Internal Systems Overview (Confidential)
 
-This document describes internal systems for staff only. Do not share with customers.
+
 
 Ticketing system
 - URL: https://tickets.internal.example.com

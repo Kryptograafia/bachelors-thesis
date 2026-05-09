@@ -7,26 +7,25 @@ from langchain_core.language_models import BaseChatModel
 
 DEFAULT_MODEL_IDS: dict[str, str] = {
     "openai": "gpt-4o-mini",
-    # claude-3-5-haiku-20241022 was retired on the API (404 not_found_error).
-    # Override with --model or set here; check Console / GET /v1/models for current IDs.
-    "anthropic": "claude-3-haiku-20240307",
     "ollama": "llama3.1:8b",
+    # Google Generative Language API; set GOOGLE_API_KEY
+    "google": "gemini-2.5-flash-lite",
 }
 
 
 def resolve_model_id(provider: str, model_id: str | None = None) -> str:
     """
     Resolved primary LLM id string for logging and Chat* construction.
-    provider: openai | anthropic | ollama
+    provider: openai | ollama | google
     """
     provider = provider.lower().strip()
     return (model_id or DEFAULT_MODEL_IDS.get(provider) or DEFAULT_MODEL_IDS["openai"]).strip()
 
 
-def get_llm(provider: str, model_id: str | None = None, temperature: float = 0.0) -> BaseChatModel:
+def get_llm(provider: str, model_id: str | None = None, temperature: float = 0.3) -> BaseChatModel:
     """
-    provider: "openai" | "anthropic" | "ollama"
-    model_id: optional override (e.g. "llama3.1:8b").
+    provider: "openai" | "ollama" | "google"
+    model_id: optional override (e.g. "llama3.1:8b", "gemini-2.5-flash-lite").
     """
     provider = provider.lower().strip()
     model = resolve_model_id(provider, model_id)
@@ -35,12 +34,14 @@ def get_llm(provider: str, model_id: str | None = None, temperature: float = 0.0
         from langchain_openai import ChatOpenAI
 
         return ChatOpenAI(model=model, temperature=temperature)
-    if provider == "anthropic":
-        from langchain_anthropic import ChatAnthropic
-
-        return ChatAnthropic(model=model, temperature=temperature)
     if provider == "ollama":
         from langchain_ollama import ChatOllama
 
         return ChatOllama(model=model, temperature=temperature)
-    raise ValueError(f"Unknown LLM provider: {provider}. Use openai, anthropic, or ollama.")
+    if provider == "google":
+        from langchain_google_genai import ChatGoogleGenerativeAI
+
+        return ChatGoogleGenerativeAI(model=model, temperature=temperature)
+    raise ValueError(
+        f"Unknown LLM provider: {provider}. Use openai, ollama, or google."
+    )
