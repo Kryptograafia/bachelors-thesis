@@ -1,5 +1,5 @@
 {
-    "description": "Hybrid suite matching prompts logged in experiment/logs_checked/Gemma/run_ollama_gemma2-9b_20260503_101548.jsonl for config M1 (elicitation-style paraphrases 2–3 where applicable; no YES/NO verdict tokens). Metadata (technique, category layout) from attack_suite_grok4.json; text bodies taken from that Gemma run.",
+    
     "sources": [
         "OWASP LLM01: Prompt Injection",
         "OWASP Prompt Injection Prevention Cheat Sheet",
